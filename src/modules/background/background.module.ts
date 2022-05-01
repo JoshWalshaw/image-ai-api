@@ -3,7 +3,7 @@ import { BackgroundController } from './background.controller';
 import { BackgroundService } from './background.service';
 import { FileSystemStoredFile, NestjsFormDataModule } from 'nestjs-form-data';
 import { BullModule } from '@nestjs/bull';
-import { ImageConsumer } from './queue/image.consumer';
+import { ImageConsumer } from '~queue/image.consumer';
 
 @Module({
   imports: [

@@ -23,4 +23,14 @@ export class BackgroundController {
   ): Promise<StreamableFile> {
     return await this.backgroundService.processImages(body);
   }
+
+  @ApiOperation({
+    summary:
+      'Adds images to the queue to be processed and have their backgrounds removed',
+  })
+  @Post()
+  @FormDataRequest()
+  async jobStatus(): Promise<unknown> {
+    return true;
+  }
 }

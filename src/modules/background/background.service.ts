@@ -6,7 +6,8 @@ import { RemoveBackgroundDto } from './dto/remove-background.dto';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { v4 as uuid } from 'uuid';
-import { IBackgroundImageJob } from './interfaces/IBackgroundImageJob';
+import { IJobData } from '~queue/interfaces/IJobData';
+import { FileSystemStoredFile } from 'nestjs-form-data';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const tfjs = require('@tensorflow/tfjs');
@@ -19,12 +20,13 @@ export class BackgroundService {
 
   async processImages(dto: RemoveBackgroundDto): Promise<StreamableFile> {
     if (dto.files.length) {
-      const jobData: IBackgroundImageJob = {
-        id: uuid(),
-        files: dto.files,
+      const jobData: IJobData<FileSystemStoredFile[]> = {
+        data: dto.files,
       };
 
-      await this.backgroundImagesQueue.add('background', jobData);
+      await this.backgroundImagesQueue.add('background', jobData, {
+        jobId: uuid(),
+      });
     }
 
     return null;
