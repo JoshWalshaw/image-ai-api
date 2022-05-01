@@ -1,5 +1,9 @@
 import '@tensorflow/tfjs-node';
-import { Injectable, StreamableFile } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  StreamableFile,
+} from '@nestjs/common';
 import { createCanvas, Image } from 'canvas';
 import * as BodyPix from '@tensorflow-models/body-pix';
 import { RemoveBackgroundDto } from './dto/remove-background.dto';
@@ -8,6 +12,8 @@ import { InjectQueue } from '@nestjs/bull';
 import { v4 as uuid } from 'uuid';
 import { IJobData } from '~queue/interfaces/IJobData';
 import { FileSystemStoredFile } from 'nestjs-form-data';
+import { IJobProgress } from '~queue/interfaces/IJobProgress';
+import { UploadBackgroundImagesResponseDto } from '~modules/background/dto/responses/upload-background-images.response.dto';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const tfjs = require('@tensorflow/tfjs');
@@ -18,18 +24,22 @@ export class BackgroundService {
     @InjectQueue('background-images') private backgroundImagesQueue: Queue,
   ) {}
 
-  async processImages(dto: RemoveBackgroundDto): Promise<StreamableFile> {
+  async processImages(
+    dto: RemoveBackgroundDto,
+  ): Promise<UploadBackgroundImagesResponseDto> {
     if (dto.files.length) {
       const jobData: IJobData<FileSystemStoredFile[]> = {
         data: dto.files,
       };
 
-      await this.backgroundImagesQueue.add('background', jobData, {
-        jobId: uuid(),
-      });
-    }
+      const jobId = uuid();
 
-    return null;
+      await this.backgroundImagesQueue.add('background', jobData, {
+        jobId,
+      });
+
+      return { jobId };
+    } else throw new BadRequestException();
   }
 
   async removeBackground(path: string): Promise<Buffer> {
@@ -78,5 +88,23 @@ export class BackgroundService {
     ctx.putImageData(newImg, 0, 0);
 
     return canvas.toBuffer();
+  }
+
+  async getJobProgress(id: string): Promise<IJobProgress> {
+    const job = await this.backgroundImagesQueue.getJob(id);
+    return <IJobProgress>job.progress();
+  }
+
+  async cancelJob(id: string): Promise<IJobProgress> {
+    const jobProgress: IJobProgress = {
+      status: 'Cancelled',
+      message: 'Job was cancelled by user',
+      lastUpdated: new Date(),
+    };
+
+    const job = await this.backgroundImagesQueue.getJob(id);
+    await job.progress(jobProgress);
+    await job.discard();
+    return jobProgress;
   }
 }

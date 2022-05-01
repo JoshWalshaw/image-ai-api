@@ -26,6 +26,12 @@ export class ImageConsumer {
     await job.progress(data);
   }
 
+  private async checkIfCancelled(jobId: string): Promise<boolean> {
+    const job = await this.backgroundImagesQueue.getJob(jobId);
+    const progress = await (<IJobProgress>job.progress());
+    return progress.status === 'Cancelled';
+  }
+
   @OnQueueWaiting()
   async onWaiting(jobId: string): Promise<void> {
     this.logger.log(`${jobId} is waiting to be picked up in the queue`);
@@ -50,26 +56,40 @@ export class ImageConsumer {
   async onProcessBackground(
     job: Job<IJobData<FileSystemStoredFile[]>>,
   ): Promise<string> {
+    /* Check if this has been cancelled before proceeding */
+    if (await this.checkIfCancelled(job.id.toString()))
+      return (<IJobProgress>job.progress()).message;
+
     const zip = new Zip();
 
     let progress = 0;
     const totalFiles = job.data.data.length;
 
+    await this.updateProgress(job, {
+      status: 'In Progress',
+      message: `Processed ${progress}/${totalFiles} images`,
+      lastUpdated: new Date(),
+    });
+
     for (const item of job.data.data) {
+      /* Check if this has been cancelled before proceeding */
+      if (await this.checkIfCancelled(job.id.toString()))
+        return (<IJobProgress>job.progress()).message;
+
       progress++;
-      await this.updateProgress(job, {
-        status: 'In Progress',
-        message: `Processed ${progress}/${totalFiles} images`,
-        lastUpdated: new Date(),
-      });
       this.logger.log(`Processing ${job.id} - ${progress}/${totalFiles}`);
       zip.addFile(
         item.originalName,
         await this.backgroundService.removeBackground(item.path),
       );
+      await this.updateProgress(job, {
+        status: 'In Progress',
+        message: `Processed ${progress}/${totalFiles} images`,
+        lastUpdated: new Date(),
+      });
     }
 
     zip.writeZip(`${process.env.TMP_IMAGE_DIRECTORY}/${job.id}.zip`);
-    return `${totalFiles} images have finished processing`;
+    return `${totalFiles} images have finished processing and are ready for download.`;
   }
 }
