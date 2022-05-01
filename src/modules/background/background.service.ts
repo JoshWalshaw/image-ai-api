@@ -35,12 +35,12 @@ export class BackgroundService {
     image.src = path;
 
     const canvas = createCanvas(image.width, image.height);
-    const ctx = canvas.getContext('"2d";
+    const ctx = canvas.getContext('2d');
 
     ctx.drawImage(image, 0, 0, image.width, image.height);
 
     const net = await BodyPix.load({
-      architecture: '"ResNet50"
+      architecture: 'ResNet50',
       outputStride: 32,
       quantBytes: 1,
     });
