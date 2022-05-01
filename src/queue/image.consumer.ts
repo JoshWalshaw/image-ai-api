@@ -1,6 +1,7 @@
 import {
   InjectQueue,
   OnQueueCompleted,
+  OnQueueFailed,
   OnQueueWaiting,
   Process,
   Processor,
@@ -66,6 +67,25 @@ export class ImageConsumer {
   }
 
   /**
+   * Is called when there is an issue with the job that causes it to fail.
+   * We update the status so the user can see there was an issue.
+   *
+   * @param job - An instance of the job that failed to process
+   * @param error - JS Error object with what went wrong
+   */
+  @OnQueueFailed()
+  async onFailed(job: Job, error: Error): Promise<void> {
+    this.logger.warn(`${job.id} failed to process correctly.`);
+    this.logger.error(JSON.stringify(error));
+
+    await this.updateProgress(job, {
+      status: 'Error',
+      message: error.message,
+      lastUpdated: new Date(),
+    });
+  }
+
+  /**
    * Is called when a job has finished processing.
    *
    * @param job - An instance of the job we want to save data against
@@ -85,6 +105,8 @@ export class ImageConsumer {
    * removing from them. Once finished it will save the modified images in a .zip
    *
    * @param job - An instance of the job we will be processing
+   *
+   * @returns the message that will be used to update the status of the job
    */
   @Process('background')
   async onProcessBackground(
