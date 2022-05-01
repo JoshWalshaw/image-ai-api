@@ -14,7 +14,7 @@ export class BackgroundController {
 
   @ApiOperation({
     summary:
-      'Attempts to remove the background from a picture with a person in',
+      'Adds images to the queue to be processed and have their backgrounds removed',
   })
   @Post()
   @FormDataRequest()
