@@ -32,7 +32,7 @@ export class BackgroundController {
   async removeBackground(
     @Body() body: RemoveBackgroundDto,
   ): Promise<UploadBackgroundImagesResponseDto> {
-    return await this.backgroundService.processImages(body);
+    return await this.backgroundService.addImagesToQueue(body);
   }
 
   @ApiOperation({

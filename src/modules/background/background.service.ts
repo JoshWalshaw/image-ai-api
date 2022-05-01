@@ -1,9 +1,5 @@
 import '@tensorflow/tfjs-node';
-import {
-  BadRequestException,
-  Injectable,
-  StreamableFile,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { createCanvas, Image } from 'canvas';
 import * as BodyPix from '@tensorflow-models/body-pix';
 import { RemoveBackgroundDto } from './dto/remove-background.dto';
@@ -15,6 +11,7 @@ import { FileSystemStoredFile } from 'nestjs-form-data';
 import { IJobProgress } from '~queue/interfaces/IJobProgress';
 import { UploadBackgroundImagesResponseDto } from '~modules/background/dto/responses/upload-background-images.response.dto';
 
+/* Wasn't able to get this to work with imports */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const tfjs = require('@tensorflow/tfjs');
 
@@ -24,7 +21,14 @@ export class BackgroundService {
     @InjectQueue('background-images') private backgroundImagesQueue: Queue,
   ) {}
 
-  async processImages(
+  /**
+   * Adds the images to the queue to be processed in the background.
+   *
+   * @param dto - The request object that was sent to us, containing the files
+   *
+   * @returns a jobId that can be used to track the status of the images uploaded
+   */
+  async addImagesToQueue(
     dto: RemoveBackgroundDto,
   ): Promise<UploadBackgroundImagesResponseDto> {
     if (dto.files.length) {
@@ -90,11 +94,27 @@ export class BackgroundService {
     return canvas.toBuffer();
   }
 
+  /**
+   * Gets the progress of a job
+   *
+   * @param id - The job UUID provided by 'addImagesToQueue'
+   *
+   * @returns the progress of the job
+   */
   async getJobProgress(id: string): Promise<IJobProgress> {
     const job = await this.backgroundImagesQueue.getJob(id);
     return <IJobProgress>job.progress();
   }
 
+  /**
+   * Sets the status of a job to be Cancelled. Prevents any further action
+   * happening on this job. If currently being processed it will stop and move
+   * on to the next one.
+   *
+   * @param id - The job UUID provided by 'addImagesToQueue'
+   *
+   * @returns the progress of the job, which is now cancelled
+   */
   async cancelJob(id: string): Promise<IJobProgress> {
     const jobProgress: IJobProgress = {
       status: 'Cancelled',
