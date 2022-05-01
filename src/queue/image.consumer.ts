@@ -22,16 +22,38 @@ export class ImageConsumer {
     private readonly backgroundService: BackgroundService,
   ) {}
 
+  /**
+   * Used to update the progress on a job, forcing an interface of IJobProgress
+   *
+   * @param job - An instance of the job we want to save data against
+   * @param data - What will be saved against the job
+   */
   private async updateProgress(job: Job, data: IJobProgress): Promise<void> {
     await job.progress(data);
   }
 
+  /**
+   * Check if a job has been cancelled. We have to get a new copy of the job
+   * each time because during our 'onProcessBackground' for example, one it
+   * starts to run - the job status doesn't get updated unless we manually
+   * re-fetch a new instance
+   *
+   * @param jobId - The UUID of the job we want to look for
+   *
+   * @returns a boolean depending on if the job is cancelled or not
+   */
   private async checkIfCancelled(jobId: string): Promise<boolean> {
     const job = await this.backgroundImagesQueue.getJob(jobId);
     const progress = await (<IJobProgress>job.progress());
     return progress.status === 'Cancelled';
   }
 
+  /**
+   * Is called when a job is added to the queue and waiting to be picked up.
+   * We use this to just update the status at the moment
+   *
+   * @param jobId - The UUID of the job we want to look for
+   */
   @OnQueueWaiting()
   async onWaiting(jobId: string): Promise<void> {
     this.logger.log(`${jobId} is waiting to be picked up in the queue`);
@@ -43,6 +65,12 @@ export class ImageConsumer {
     });
   }
 
+  /**
+   * Is called when a job has finished processing.
+   *
+   * @param job - An instance of the job we want to save data against
+   * @param result - The return value of the method that processed the job. Will typically be a string, however wanted this to be flexible
+   */
   @OnQueueCompleted()
   async onCompleted(job: Job, result: unknown) {
     await this.updateProgress(job, {
@@ -52,6 +80,12 @@ export class ImageConsumer {
     });
   }
 
+  /**
+   * Is used to process the images that have been uploaded and want the backgrounds
+   * removing from them. Once finished it will save the modified images in a .zip
+   *
+   * @param job - An instance of the job we will be processing
+   */
   @Process('background')
   async onProcessBackground(
     job: Job<IJobData<FileSystemStoredFile[]>>,
