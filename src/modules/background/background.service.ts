@@ -3,39 +3,44 @@ import { Injectable, StreamableFile } from '@nestjs/common';
 import { createCanvas, Image } from 'canvas';
 import * as BodyPix from '@tensorflow-models/body-pix';
 import { RemoveBackgroundDto } from './dto/remove-background.dto';
-import * as Zip from 'adm-zip';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
+import { v4 as uuid } from 'uuid';
+import { IBackgroundImageJob } from './interfaces/IBackgroundImageJob';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const tfjs = require('@tensorflow/tfjs');
 
 @Injectable()
 export class BackgroundService {
-  public async processImages(
-    dto: RemoveBackgroundDto,
-  ): Promise<StreamableFile> {
-    const zip = new Zip();
+  constructor(
+    @InjectQueue('background-images') private backgroundImagesQueue: Queue,
+  ) {}
 
+  async processImages(dto: RemoveBackgroundDto): Promise<StreamableFile> {
     if (dto.files.length) {
-      for (const item of dto.files) {
-        zip.addFile(item.originalName, await this.removeBackground(item.path));
-      }
+      const jobData: IBackgroundImageJob = {
+        id: uuid(),
+        files: dto.files,
+      };
+
+      await this.backgroundImagesQueue.add('background', jobData);
     }
 
-    zip.writeZip(`${process.env.TMP_IMAGE_DIRECTORY}/files.zip`);
-
-    return new StreamableFile(zip.toBuffer());
+    return null;
   }
 
-  private async removeBackground(path: string): Promise<Buffer> {
+  async removeBackground(path: string): Promise<Buffer> {
     const image = new Image();
     image.src = path;
 
     const canvas = createCanvas(image.width, image.height);
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('"2d";
+
     ctx.drawImage(image, 0, 0, image.width, image.height);
 
     const net = await BodyPix.load({
-      architecture: 'ResNet50',
+      architecture: '"ResNet50"
       outputStride: 32,
       quantBytes: 1,
     });

@@ -11,7 +11,7 @@ services:
       - /usr/src/app/node_modules
       - uploads:${TMP_IMAGE_DIRECTORY}
     ports:
-      - ${APPLICATION_PORT}:${APPLICATION_PORT}1
+      - ${APPLICATION_PORT}:${APPLICATION_PORT}
     command: npm run start:dev
     env_file:
       - .env
