@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Response,
   Delete,
   Get,
   Param,
@@ -33,6 +34,28 @@ export class BackgroundController {
     @Body() body: RemoveBackgroundDto,
   ): Promise<UploadBackgroundImagesResponseDto> {
     return await this.backgroundService.addImagesToQueue(body);
+  }
+
+  @ApiOperation({
+    summary: 'Downloads the processed results',
+  })
+  @ApiParam({
+    name: 'id',
+    type: 'string',
+    description: 'The id provided by the POST /remove-background endpoint',
+  })
+  @Get('/:id')
+  async downloadImages(
+    @Response({ passthrough: true }) res,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<StreamableFile> {
+    // TODO: See if there's a better way to do this
+    const file = await this.backgroundService.downloadFiles(id);
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${id}.zip"`,
+    });
+    return file;
   }
 
   @ApiOperation({

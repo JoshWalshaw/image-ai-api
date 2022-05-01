@@ -1,5 +1,13 @@
 import '@tensorflow/tfjs-node';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  PreconditionFailedException,
+  ServiceUnavailableException,
+  StreamableFile,
+} from '@nestjs/common';
 import { createCanvas, Image } from 'canvas';
 import * as BodyPix from '@tensorflow-models/body-pix';
 import { RemoveBackgroundDto } from './dto/remove-background.dto';
@@ -10,6 +18,8 @@ import { IJobData } from '~queue/interfaces/IJobData';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 import { IJobProgress } from '~queue/interfaces/IJobProgress';
 import { UploadBackgroundImagesResponseDto } from '~modules/background/dto/responses/upload-background-images.response.dto';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 /* Wasn't able to get this to work with imports */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -17,6 +27,8 @@ const tfjs = require('@tensorflow/tfjs');
 
 @Injectable()
 export class BackgroundService {
+  private logger: Logger = new Logger(BackgroundService.name);
+
   constructor(
     @InjectQueue('background-images') private backgroundImagesQueue: Queue,
   ) {}
@@ -126,5 +138,40 @@ export class BackgroundService {
     await job.progress(jobProgress);
     await job.discard();
     return jobProgress;
+  }
+
+  /**
+   * Sets the status of a job to be Cancelled. Prevents any further action
+   * happening on this job. If currently being processed it will stop and move
+   * on to the next one.
+   *
+   * @param id - The job UUID provided by 'addImagesToQueue'
+   *
+   * @returns the progress of the job, which is now cancelled
+   */
+  async downloadFiles(id: string): Promise<StreamableFile> {
+    const progress = await this.getJobProgress(id);
+
+    if (progress.status === 'Completed') {
+      try {
+        const file = await fs.readFile(
+          path.join(process.env.TMP_IMAGE_DIRECTORY, `${id}.zip`),
+        );
+        return new StreamableFile(file, {
+          type: 'application/zip',
+          disposition: `${id}.zip`,
+        });
+      } catch (error) {
+        this.logger.warn('There was an error reading a file: ', id);
+        this.logger.error(error);
+        throw new ServiceUnavailableException(
+          'There was an error reading the file requested.',
+        );
+      }
+    } else {
+      throw new PreconditionFailedException(
+        "These images haven't finished processing yet. Please try again later.",
+      );
+    }
   }
 }
