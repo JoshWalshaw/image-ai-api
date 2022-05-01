@@ -128,13 +128,20 @@ export class BackgroundService {
    * @returns the progress of the job, which is now cancelled
    */
   async cancelJob(id: string): Promise<IJobProgress> {
+    const job = await this.backgroundImagesQueue.getJob(id);
+    const progress = await (<IJobProgress>job.progress());
+
+    if (progress.status === 'Completed') {
+      throw new PreconditionFailedException(
+        'This job has already completed, and unable to be cancelled',
+      );
+    }
+
     const jobProgress: IJobProgress = {
       status: 'Cancelled',
       message: 'Job was cancelled by user',
       lastUpdated: new Date(),
     };
-
-    const job = await this.backgroundImagesQueue.getJob(id);
     await job.progress(jobProgress);
     await job.discard();
     return jobProgress;
