@@ -3,12 +3,12 @@ import { BackgroundRemovalController } from './background-removal.controller';
 import { BackgroundRemovalService } from './background-removal.service';
 import { FileSystemStoredFile, NestjsFormDataModule } from 'nestjs-form-data';
 import { BullModule } from '@nestjs/bull';
-import { ImageConsumer } from '~queue/image.consumer';
+import { BackgroundRemovalConsumer } from '~queue/background-removal.consumer';
 
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'background-images',
+      name: 'background-removal',
     }),
     NestjsFormDataModule.config({
       storage: FileSystemStoredFile,
@@ -17,6 +17,6 @@ import { ImageConsumer } from '~queue/image.consumer';
     }),
   ],
   controllers: [BackgroundRemovalController],
-  providers: [BackgroundRemovalService, ImageConsumer],
+  providers: [BackgroundRemovalService, BackgroundRemovalConsumer],
 })
 export class BackgroundRemovalModule {}

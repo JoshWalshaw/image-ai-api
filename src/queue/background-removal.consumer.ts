@@ -14,12 +14,12 @@ import { IJobData } from '~queue/interfaces/IJobData';
 import { IJobProgress } from '~queue/interfaces/IJobProgress';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 
-@Processor('background-images')
-export class ImageConsumer {
-  private logger: Logger = new Logger(ImageConsumer.name);
+@Processor('background-removal')
+export class BackgroundRemovalConsumer {
+  private logger: Logger = new Logger(BackgroundRemovalConsumer.name);
 
   constructor(
-    @InjectQueue('background-images') private backgroundImagesQueue: Queue,
+    @InjectQueue('background-removal') private backgroundImagesQueue: Queue,
     private readonly backgroundRemovalService: BackgroundRemovalService,
   ) {}
 

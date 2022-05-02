@@ -29,7 +29,7 @@ export class BackgroundRemovalService {
   private logger: Logger = new Logger(BackgroundRemovalService.name);
 
   constructor(
-    @InjectQueue('background-images') private backgroundImagesQueue: Queue,
+    @InjectQueue('background-removal') private backgroundImagesQueue: Queue,
   ) {}
 
   /**
