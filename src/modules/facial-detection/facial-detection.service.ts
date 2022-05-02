@@ -1,4 +1,3 @@
-import '@tensorflow/tfjs-node';
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';

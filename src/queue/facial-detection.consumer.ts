@@ -3,24 +3,20 @@ import {
   OnQueueCompleted,
   OnQueueFailed,
   OnQueueWaiting,
-  Process,
   Processor,
 } from '@nestjs/bull';
 import { Job, Queue } from 'bull';
 import { Logger } from '@nestjs/common';
-import * as Zip from 'adm-zip';
-import { BackgroundRemovalService } from '~modules/background-removal/background-removal.service';
-import { IJobData } from '~queue/interfaces/IJobData';
 import { IJobProgress } from '~queue/interfaces/IJobProgress';
-import { FileSystemStoredFile } from 'nestjs-form-data';
+import { FacialDetectionService } from '~modules/facial-detection/facial-detection.service';
 
-@Processor('background-removal')
-export class BackgroundRemovalConsumer {
-  private logger: Logger = new Logger(BackgroundRemovalConsumer.name);
+@Processor('facial-detection')
+export class FacialDetectionConsumer {
+  private logger: Logger = new Logger(FacialDetectionConsumer.name);
 
   constructor(
-    @InjectQueue('background-removal') private backgroundImagesQueue: Queue,
-    private readonly backgroundRemovalService: BackgroundRemovalService,
+    @InjectQueue('facial-detection') private facialDetectionQueue: Queue,
+    private readonly facialDetectionService: FacialDetectionService,
   ) {}
 
   /**
@@ -44,7 +40,7 @@ export class BackgroundRemovalConsumer {
    * @returns a boolean depending on if the job is cancelled or not
    */
   private async checkIfCancelled(jobId: string): Promise<boolean> {
-    const job = await this.backgroundImagesQueue.getJob(jobId);
+    const job = await this.facialDetectionQueue.getJob(jobId);
     const progress = await (<IJobProgress>job.progress());
     return progress.status === 'Cancelled';
   }
@@ -58,7 +54,7 @@ export class BackgroundRemovalConsumer {
   @OnQueueWaiting()
   async onWaiting(jobId: string): Promise<void> {
     this.logger.log(`${jobId} is waiting to be picked up in the queue`);
-    const job = await this.backgroundImagesQueue.getJob(jobId);
+    const job = await this.facialDetectionQueue.getJob(jobId);
     await this.updateProgress(job, {
       status: 'Waiting',
       message: `Waiting to be picked up in the queue`,
@@ -98,56 +94,5 @@ export class BackgroundRemovalConsumer {
       message: String(result),
       lastUpdated: new Date(),
     });
-  }
-
-  /**
-   * Is used to process the images that have been uploaded and want the backgrounds
-   * removing from them. Once finished it will save the modified images in a .zip
-   *
-   * @param job - An instance of the job we will be processing
-   *
-   * @returns the message that will be used to update the status of the job
-   */
-  @Process('upload')
-  async onProcessBackground(
-    job: Job<IJobData<FileSystemStoredFile[]>>,
-  ): Promise<string> {
-    /* Check if this has been cancelled before proceeding */
-    if (await this.checkIfCancelled(job.id.toString()))
-      return (<IJobProgress>job.progress()).message;
-
-    const zip = new Zip();
-
-    let progress = 0;
-    const totalFiles = job.data.data.length;
-
-    await this.updateProgress(job, {
-      status: 'In Progress',
-      message: `Processed ${progress}/${totalFiles} images`,
-      lastUpdated: new Date(),
-    });
-
-    for (const item of job.data.data) {
-      /* Check if this has been cancelled before proceeding */
-      if (await this.checkIfCancelled(job.id.toString()))
-        return (<IJobProgress>job.progress()).message;
-
-      progress++;
-      this.logger.log(`Processing ${job.id} - ${progress}/${totalFiles}`);
-      zip.addFile(
-        item.originalName,
-        await this.backgroundRemovalService.removeBackground(item.path),
-      );
-      await this.updateProgress(job, {
-        status: 'In Progress',
-        message: `Processed ${progress}/${totalFiles} images`,
-        lastUpdated: new Date(),
-      });
-    }
-
-    zip.writeZip(
-      `${process.env.TMP_IMAGE_DIRECTORY_BACKGROUND}/processed/${job.id}.zip`,
-    );
-    return `${totalFiles} images have finished processing and are ready for download.`;
   }
 }

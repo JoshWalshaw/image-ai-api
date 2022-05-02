@@ -1,4 +1,3 @@
-import '@tensorflow/tfjs-node';
 import {
   BadRequestException,
   Injectable,
@@ -49,7 +48,7 @@ export class BackgroundRemovalService {
 
       const jobId = uuid();
 
-      await this.backgroundImagesQueue.add('background', jobData, {
+      await this.backgroundImagesQueue.add('upload', jobData, {
         jobId,
       });
 

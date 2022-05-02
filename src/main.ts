@@ -1,3 +1,4 @@
+import '@tensorflow/tfjs-node';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '~modules/app/app.module';
 import { configureMiddleware } from './middleware';

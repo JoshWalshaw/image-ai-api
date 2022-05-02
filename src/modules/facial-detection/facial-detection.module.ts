@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { FileSystemStoredFile, NestjsFormDataModule } from 'nestjs-form-data';
 import { BullModule } from '@nestjs/bull';
-import { BackgroundRemovalConsumer } from '~queue/background-removal.consumer';
 import { FacialDetectionService } from '~modules/facial-detection/facial-detection.service';
 import { FacialDetectionController } from '~modules/facial-detection/facial-detection.controller';
+import { FacialDetectionConsumer } from '~queue/facial-detection.consumer';
 
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'background-removal',
+      name: 'facial-detection',
     }),
     NestjsFormDataModule.config({
       storage: FileSystemStoredFile,
@@ -17,6 +17,6 @@ import { FacialDetectionController } from '~modules/facial-detection/facial-dete
     }),
   ],
   controllers: [FacialDetectionController],
-  providers: [FacialDetectionService, BackgroundRemovalConsumer],
+  providers: [FacialDetectionService, FacialDetectionConsumer],
 })
 export class FacialDetectionModule {}
