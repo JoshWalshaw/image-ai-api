@@ -1,7 +1,6 @@
 import '@tensorflow/tfjs-node';
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   Logger,
   PreconditionFailedException,
@@ -17,7 +16,7 @@ import { v4 as uuid } from 'uuid';
 import { IJobData } from '~queue/interfaces/IJobData';
 import { FileSystemStoredFile } from 'nestjs-form-data';
 import { IJobProgress } from '~queue/interfaces/IJobProgress';
-import { UploadBackgroundImagesResponseDto } from '~modules/background/dto/responses/upload-background-images.response.dto';
+import { UploadBackgroundImagesResponseDto } from '~modules/background-removal/dto/responses/upload-background-images.response.dto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -26,8 +25,8 @@ import * as path from 'path';
 const tfjs = require('@tensorflow/tfjs');
 
 @Injectable()
-export class BackgroundService {
-  private logger: Logger = new Logger(BackgroundService.name);
+export class BackgroundRemovalService {
+  private logger: Logger = new Logger(BackgroundRemovalService.name);
 
   constructor(
     @InjectQueue('background-images') private backgroundImagesQueue: Queue,

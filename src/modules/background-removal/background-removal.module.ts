@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { BackgroundController } from './background.controller';
-import { BackgroundService } from './background.service';
+import { BackgroundRemovalController } from './background-removal.controller';
+import { BackgroundRemovalService } from './background-removal.service';
 import { FileSystemStoredFile, NestjsFormDataModule } from 'nestjs-form-data';
 import { BullModule } from '@nestjs/bull';
 import { ImageConsumer } from '~queue/image.consumer';
@@ -16,7 +16,7 @@ import { ImageConsumer } from '~queue/image.consumer';
       autoDeleteFile: false,
     }),
   ],
-  controllers: [BackgroundController],
-  providers: [BackgroundService, ImageConsumer],
+  controllers: [BackgroundRemovalController],
+  providers: [BackgroundRemovalService, ImageConsumer],
 })
-export class BackgroundModule {}
+export class BackgroundRemovalModule {}

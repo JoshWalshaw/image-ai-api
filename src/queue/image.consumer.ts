@@ -9,7 +9,7 @@ import {
 import { Job, Queue } from 'bull';
 import { Logger } from '@nestjs/common';
 import * as Zip from 'adm-zip';
-import { BackgroundService } from '~modules/background/background.service';
+import { BackgroundRemovalService } from '~modules/background-removal/background-removal.service';
 import { IJobData } from '~queue/interfaces/IJobData';
 import { IJobProgress } from '~queue/interfaces/IJobProgress';
 import { FileSystemStoredFile } from 'nestjs-form-data';
@@ -20,7 +20,7 @@ export class ImageConsumer {
 
   constructor(
     @InjectQueue('background-images') private backgroundImagesQueue: Queue,
-    private readonly backgroundService: BackgroundService,
+    private readonly backgroundRemovalService: BackgroundRemovalService,
   ) {}
 
   /**
@@ -136,7 +136,7 @@ export class ImageConsumer {
       this.logger.log(`Processing ${job.id} - ${progress}/${totalFiles}`);
       zip.addFile(
         item.originalName,
-        await this.backgroundService.removeBackground(item.path),
+        await this.backgroundRemovalService.removeBackground(item.path),
       );
       await this.updateProgress(job, {
         status: 'In Progress',

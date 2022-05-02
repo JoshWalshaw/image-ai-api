@@ -9,20 +9,22 @@ import {
   Post,
   StreamableFile,
 } from '@nestjs/common';
-import { BackgroundService } from './background.service';
+import { BackgroundRemovalService } from './background-removal.service';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { FormDataRequest } from 'nestjs-form-data';
 import { RemoveBackgroundDto } from './dto/remove-background.dto';
 import { IJobProgress } from '~queue/interfaces/IJobProgress';
-import { UploadBackgroundImagesResponseDto } from '~modules/background/dto/responses/upload-background-images.response.dto';
+import { UploadBackgroundImagesResponseDto } from '~modules/background-removal/dto/responses/upload-background-images.response.dto';
 
 @ApiTags('Remove Background')
 @Controller({
   path: '/remove-background',
   version: '1',
 })
-export class BackgroundController {
-  constructor(private readonly backgroundService: BackgroundService) {}
+export class BackgroundRemovalController {
+  constructor(
+    private readonly backgroundRemovalService: BackgroundRemovalService,
+  ) {}
 
   @ApiOperation({
     summary:
@@ -33,7 +35,7 @@ export class BackgroundController {
   async removeBackground(
     @Body() body: RemoveBackgroundDto,
   ): Promise<UploadBackgroundImagesResponseDto> {
-    return await this.backgroundService.addImagesToQueue(body);
+    return await this.backgroundRemovalService.addImagesToQueue(body);
   }
 
   @ApiOperation({
@@ -50,7 +52,7 @@ export class BackgroundController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<StreamableFile> {
     // TODO: See if there's a better way to do this
-    const file = await this.backgroundService.downloadFiles(id);
+    const file = await this.backgroundRemovalService.downloadFiles(id);
     res.set({
       'Content-Type': 'application/zip',
       'Content-Disposition': `attachment; filename="${id}.zip"`,
@@ -71,7 +73,7 @@ export class BackgroundController {
   async getJobStatus(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IJobProgress> {
-    return await this.backgroundService.getJobProgress(id);
+    return await this.backgroundRemovalService.getJobProgress(id);
   }
 
   @ApiOperation({
@@ -86,6 +88,6 @@ export class BackgroundController {
   async cancelJob(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<IJobProgress> {
-    return await this.backgroundService.cancelJob(id);
+    return await this.backgroundRemovalService.cancelJob(id);
   }
 }

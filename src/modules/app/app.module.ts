@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { BackgroundModule } from '../background/background.module';
+import { BackgroundRemovalModule } from '../background-removal/background-removal.module';
 import { BullModule } from '@nestjs/bull';
 
 @Module({
@@ -12,7 +12,7 @@ import { BullModule } from '@nestjs/bull';
         port: Number(process.env.REDIS_PORT),
       },
     }),
-    BackgroundModule,
+    BackgroundRemovalModule,
   ],
   controllers: [],
   providers: [],
