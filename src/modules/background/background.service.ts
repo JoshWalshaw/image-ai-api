@@ -162,7 +162,11 @@ export class BackgroundService {
     if (progress.status === 'Completed') {
       try {
         const file = await fs.readFile(
-          path.join(process.env.TMP_IMAGE_DIRECTORY, `${id}.zip`),
+          path.join(
+            process.env.TMP_IMAGE_DIRECTORY_BACKGROUND,
+            'processed',
+            `${id}.zip`,
+          ),
         );
         return new StreamableFile(file, {
           type: 'application/zip',

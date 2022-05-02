@@ -145,7 +145,9 @@ export class ImageConsumer {
       });
     }
 
-    zip.writeZip(`${process.env.TMP_IMAGE_DIRECTORY}/${job.id}.zip`);
+    zip.writeZip(
+      `${process.env.TMP_IMAGE_DIRECTORY_BACKGROUND}/processed/${job.id}.zip`,
+    );
     return `${totalFiles} images have finished processing and are ready for download.`;
   }
 }

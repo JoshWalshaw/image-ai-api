@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { BackgroundController } from './background.controller';
-import { BackgroundService } from './background.service';
 import { FileSystemStoredFile, NestjsFormDataModule } from 'nestjs-form-data';
 import { BullModule } from '@nestjs/bull';
 import { ImageConsumer } from '~queue/image.consumer';
+import { FacialDetectionService } from '~modules/facial-detection/facial-detection.service';
+import { FacialDetectionController } from '~modules/facial-detection/facial-detection.controller';
 
 @Module({
   imports: [
@@ -12,11 +12,11 @@ import { ImageConsumer } from '~queue/image.consumer';
     }),
     NestjsFormDataModule.config({
       storage: FileSystemStoredFile,
-      fileSystemStoragePath: process.env.TMP_IMAGE_DIRECTORY_BACKGROUND,
+      fileSystemStoragePath: process.env.TMP_IMAGE_DIRECTORY_FACIAL,
       autoDeleteFile: false,
     }),
   ],
-  controllers: [BackgroundController],
-  providers: [BackgroundService, ImageConsumer],
+  controllers: [FacialDetectionController],
+  providers: [FacialDetectionService, ImageConsumer],
 })
-export class BackgroundModule {}
+export class FacialDetectionModule {}
